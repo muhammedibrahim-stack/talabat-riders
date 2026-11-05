@@ -16,6 +16,12 @@
   body{background:var(--cr);color:var(--bu);font-family:Poppins,Arial,sans-serif;font-size:12px;-webkit-user-select:none;user-select:none}
   .hide{display:none!important}
 
+  /* ---------- lock screen ---------- */
+  #locked{position:fixed;inset:0;background:var(--bu);color:var(--cr);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;text-align:center;padding:20px}
+  #locked img{height:50px;transform:rotate(4.7deg);margin-bottom:20px}
+  #locked h2{color:var(--or);font-size:26px;margin:0 0 10px}
+  #locked p{color:rgba(244,237,227,.7);font-size:14px;max-width:400px;line-height:1.6}
+
   /* ---------- login ---------- */
   #login{position:fixed;inset:0;background:var(--or);display:flex;align-items:center;justify-content:center;z-index:99}
   #login .card{background:var(--cr);width:400px;border-radius:22px;padding:38px 36px 26px;box-shadow:0 30px 60px rgba(65,21,23,.35);position:relative}
@@ -85,6 +91,13 @@
 </style>
 </head>
 <body>
+
+<!-- Maintenance Lock Screen -->
+<div id="locked" class="hide">
+  <img src="assets/talabat-logo.png" alt="talabat">
+  <h2>Service Suspended</h2>
+  <p>لوحة المتابعة المباشرة متوقفة حالياً بواسطة الإدارة.<br>يرجى مراجعة المسؤول لإعادة تفعيل الرابط.</p>
+</div>
 
 <div id="login">
   <div class="card">
@@ -157,7 +170,7 @@ const F = { company: "", gov: "", q: "", vehicle: "", zone: "", state: "", sp: "
 let LASTERR = "";
 const log = (t) => { $("log").textContent = t; };
 function emptyMsg(cols) {
-  const m = LASTERR ? LASTERR : (ROWS.length ? "No riders match the filters." : "No live data available yet. Please wait for sync.");
+  const m = LASTERR ? LASTERR : (ROWS.length ? "No riders match the filters." : "No live data available yet.");
   return `<tr><td colspan="${cols}" style="height:140px;text-align:center;white-space:normal;color:#411517"><b style="color:#FF5900">${LASTERR ? "Could not load data" : "Nothing to show"}</b><br>${esc(m)}</td></tr>`;
 }
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -167,6 +180,27 @@ const hms = (s) => { s = Math.round(s || 0); const p = (x) => String(x).padStart
 const hm = (s) => s ? new Date(s).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
 const govName = (r) => `City ${r.city_id}`;
 const uniq = (a) => [...new Set(a.filter(x => x !== "" && x != null))].sort((x, y) => String(x).localeCompare(String(y)));
+
+// check link lock
+async function checkSystemLock() {
+  try {
+    const res = await fetch(`${FIREBASE_DB_URL}/system_status.json`);
+    const val = await res.json();
+    const isOnline = val === null || val.online !== false;
+    const admin = USER && USER.role === "admin";
+    if (!isOnline && !admin) {
+      $("locked").classList.remove("hide");
+      $("app").classList.add("hide");
+      $("login").classList.add("hide");
+      return false;
+    } else {
+      $("locked").classList.add("hide");
+      return true;
+    }
+  } catch (e) {
+    return true;
+  }
+}
 
 // auth
 async function sha(salt, pw) {
@@ -180,8 +214,11 @@ async function signIn() {
   localStorage.setItem("session", JSON.stringify({ email: a.email }));
   enter(a);
 }
-function enter(a) {
+async function enter(a) {
   USER = a;
+  const allowed = await checkSystemLock();
+  if (!allowed) return;
+
   $("login").classList.add("hide"); $("app").classList.remove("hide");
   const admin = a.role === "admin";
   document.querySelectorAll(".adm").forEach(el => el.classList.toggle("hide", !admin));
@@ -198,6 +235,9 @@ $("logout").onclick = () => { localStorage.removeItem("session"); location.reloa
 // fetch data
 let LOADING = false;
 async function fetchLiveFromFirebase() {
+  const allowed = await checkSystemLock();
+  if (!allowed) return;
+
   if (LOADING) return; LOADING = true;
   $("go").disabled = true; log("Loading...");
   try {
@@ -337,11 +377,16 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
 window.addEventListener("resize", () => { if (ROWS.length) render(); });
 
 // boot
-window.onload = () => {
+window.onload = async () => {
   const sess = localStorage.getItem("session");
   const parsed = sess ? JSON.parse(sess) : null;
   const a = parsed && T2_CONFIG.accounts.find(x => x.email === parsed.email);
-  if (a) enter(a); else $("l-email").focus();
+  if (a) {
+    enter(a);
+  } else {
+    await checkSystemLock();
+    $("l-email").focus();
+  }
 };
 </script>
 </body>
