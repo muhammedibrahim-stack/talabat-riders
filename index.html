@@ -47,7 +47,6 @@
   .who b{display:block;font-size:12px;color:var(--li);font-weight:600}
   .who a{color:var(--or);cursor:pointer;font-weight:600}
 
-  /* Killswitch Button */
   .switch-btn{width:100%;padding:11px;border-radius:8px;font-weight:800;cursor:pointer;border:0;margin-bottom:12px;font-size:11.5px;transition:0.2s}
   .switch-on{background:#27ae60;color:#fff}
   .switch-off{background:#c0392b;color:#fff}
@@ -122,7 +121,6 @@
     <div class="brand"><img src="assets/talabat-logo.png" alt="talabat"></div>
     <div class="who"><b id="u-label"></b><span id="u-email"></span> · <a id="logout">Sign out</a></div>
 
-    <!-- Admin Link Switch (ON/OFF) -->
     <div class="adm hide">
       <button id="sw-link" class="switch-btn switch-on">🟢 Links: ONLINE</button>
     </div>
@@ -274,7 +272,7 @@ $("l-go").onclick = signIn;
 $("l-pw").onkeydown = (e) => { if (e.key === "Enter") signIn(); };
 $("logout").onclick = () => { localStorage.removeItem("session"); location.reload(); };
 
-// fetch data
+// ---------- fetch partitioned data from Firebase ----------
 let LOADING = false;
 async function fetchLiveFromFirebase() {
   const allowed = await checkSystemLock();
@@ -283,14 +281,31 @@ async function fetchLiveFromFirebase() {
   if (LOADING) return; LOADING = true;
   $("go").disabled = true; log("Loading...");
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/dashboard.json`);
-    if (!res.ok) throw new Error("HTTP error " + res.status);
-    const data = await res.json();
-    if (!data || !data.rows) throw new Error("No data in Firebase yet.");
-    ALL_ROWS = data.rows;
     const admin = USER.role === "admin";
-    ROWS = ALL_ROWS.filter(r => admin || r.company_id === USER.company);
-    const updTime = data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("en-GB") : new Date().toLocaleTimeString("en-GB");
+    let updTime = "";
+
+    if (admin) {
+      // الآدمن يسحب بيانات كل الشركات
+      const res = await fetch(`${FIREBASE_DB_URL}/live.json`);
+      if (!res.ok) throw new Error("HTTP error " + res.status);
+      const data = await res.json();
+      if (!data || !data.companies) throw new Error("No data in Firebase yet.");
+      ALL_ROWS = Object.values(data.companies).flat();
+      ROWS = ALL_ROWS;
+      updTime = data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("en-GB") : new Date().toLocaleTimeString("en-GB");
+    } else {
+      // المكتب يسحب فقط بيانات شركته
+      const [rRes, tRes] = await Promise.all([
+        fetch(`${FIREBASE_DB_URL}/live/companies/${USER.company}.json`),
+        fetch(`${FIREBASE_DB_URL}/live/updatedAt.json`)
+      ]);
+      if (!rRes.ok) throw new Error("HTTP error " + rRes.status);
+      const riders = await rRes.json();
+      const updatedAt = await tRes.json();
+      ROWS = Array.isArray(riders) ? riders : [];
+      updTime = updatedAt ? new Date(updatedAt).toLocaleTimeString("en-GB") : new Date().toLocaleTimeString("en-GB");
+    }
+
     $("upd").textContent = "Data refreshed " + updTime + " · " + num(ROWS.length) + " riders";
     LASTERR = ""; log("Updated");
     buildFilters(); PG.riders = PG.companies = 0; render();
