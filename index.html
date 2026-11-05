@@ -46,6 +46,12 @@
   .who{background:rgba(244,237,227,.08);border-radius:10px;padding:9px 11px;margin-bottom:14px;font-size:10px;line-height:1.4}
   .who b{display:block;font-size:12px;color:var(--li);font-weight:600}
   .who a{color:var(--or);cursor:pointer;font-weight:600}
+
+  /* Killswitch Button */
+  .switch-btn{width:100%;padding:11px;border-radius:8px;font-weight:800;cursor:pointer;border:0;margin-bottom:12px;font-size:11.5px;transition:0.2s}
+  .switch-on{background:#27ae60;color:#fff}
+  .switch-off{background:#c0392b;color:#fff}
+
   aside h4{margin:0 0 8px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(244,237,227,.55);font-weight:600}
   .fl{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto}
   aside input,aside select{width:100%;padding:9px 10px;border:1px solid rgba(244,237,227,.2);border-radius:8px;background:rgba(244,237,227,.07);color:var(--cr);font:inherit;font-size:11.5px;-webkit-user-select:text;user-select:text}
@@ -92,7 +98,6 @@
 </head>
 <body>
 
-<!-- Maintenance Lock Screen -->
 <div id="locked" class="hide">
   <img src="assets/talabat-logo.png" alt="talabat">
   <h2>Service Suspended</h2>
@@ -116,6 +121,11 @@
   <aside>
     <div class="brand"><img src="assets/talabat-logo.png" alt="talabat"></div>
     <div class="who"><b id="u-label"></b><span id="u-email"></span> · <a id="logout">Sign out</a></div>
+
+    <!-- Admin Link Switch (ON/OFF) -->
+    <div class="adm hide">
+      <button id="sw-link" class="switch-btn switch-on">🟢 Links: ONLINE</button>
+    </div>
 
     <h4>Filters</h4>
     <div class="fl">
@@ -164,6 +174,7 @@ const dyn = {}; let xi = 0;
 const sty = (s) => STATE_STYLE[s] || dyn[s] || (dyn[s] = EXTRA[xi++ % EXTRA.length]);
 
 let USER = null, ALL_ROWS = [], ROWS = [], SORT = { key: "name", dir: 1 }, TAB = "riders", timer = null;
+let SYSTEM_ONLINE = true;
 const PG = { riders: 0, companies: 0 };
 const F = { company: "", gov: "", q: "", vehicle: "", zone: "", state: "", sp: "" };
 
@@ -186,9 +197,10 @@ async function checkSystemLock() {
   try {
     const res = await fetch(`${FIREBASE_DB_URL}/system_status.json`);
     const val = await res.json();
-    const isOnline = val === null || val.online !== false;
+    SYSTEM_ONLINE = val === null || val.online !== false;
+    renderSwitch();
     const admin = USER && USER.role === "admin";
-    if (!isOnline && !admin) {
+    if (!SYSTEM_ONLINE && !admin) {
       $("locked").classList.remove("hide");
       $("app").classList.add("hide");
       $("login").classList.add("hide");
@@ -201,6 +213,33 @@ async function checkSystemLock() {
     return true;
   }
 }
+
+function renderSwitch() {
+  const btn = $("sw-link");
+  if (!btn) return;
+  if (SYSTEM_ONLINE) {
+    btn.className = "switch-btn switch-on";
+    btn.textContent = "🟢 Links: ONLINE (Active)";
+  } else {
+    btn.className = "switch-btn switch-off";
+    btn.textContent = "🔴 Links: LOCKED (Off)";
+  }
+}
+
+$("sw-link").onclick = async () => {
+  SYSTEM_ONLINE = !SYSTEM_ONLINE;
+  renderSwitch();
+  try {
+    await fetch(`${FIREBASE_DB_URL}/system_status.json`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ online: SYSTEM_ONLINE, updatedAt: new Date().toISOString() })
+    });
+    log(SYSTEM_ONLINE ? "Links are now ONLINE" : "Links are now LOCKED");
+  } catch (e) {
+    log("Error updating status: " + e.message);
+  }
+};
 
 // auth
 async function sha(salt, pw) {
@@ -224,6 +263,9 @@ async function enter(a) {
   document.querySelectorAll(".adm").forEach(el => el.classList.toggle("hide", !admin));
   $("u-label").textContent = a.label; $("u-email").textContent = a.email;
   $("title").innerHTML = admin ? "Riders <b>Live</b>" : esc(a.label) + " <b>Riders</b>";
+  
+  if (admin) checkSystemLock();
+
   clearInterval(timer);
   timer = setInterval(fetchLiveFromFirebase, 30000);
   fetchLiveFromFirebase();
