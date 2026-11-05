@@ -9,6 +9,14 @@ window.T2_CONFIG = {
    "hash": "8a34162cd745836002760fbc28da572083ae3766c1b6ee20f77aa848294270bf"
   },
   {
+   "email": "admin2@talabat.com",
+   "role": "admin",
+   "company": null,
+   "label": "Admin 2 (all offices)",
+   "salt": "2d16bd43f14f804c",
+   "hash": "7473f9d66be178718d7beb0cc4337382e58c6d0b66c63d1fcf3707cbf0e643e4"
+  },
+  {
    "email": "eg.abtal.ext@talabat.com",
    "role": "office",
    "company": 5,
