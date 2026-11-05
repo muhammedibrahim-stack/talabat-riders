@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>talabat | Riders Live Dashboard</title>
+<style>
+  @font-face{font-family:Poppins;font-weight:400;src:url(assets/Poppins-Regular.ttf)}
+  @font-face{font-family:Poppins;font-weight:500;src:url(assets/Poppins-Medium.ttf)}
+  @font-face{font-family:Poppins;font-weight:600;src:url(assets/Poppins-SemiBold.ttf)}
+  @font-face{font-family:Poppins;font-weight:800;src:url(assets/Poppins-ExtraBold.ttf)}
+  @font-face{font-family:Poppins;font-weight:900;src:url(assets/Poppins-Black.ttf)}
+  :root{--or:#FF5900;--bu:#411517;--cr:#F4EDE3;--wh:#fff;--li:#CFFF00;--pu:#8318D8;--gr:#595959;--ln:#e6dccd}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden}
+  body{background:var(--cr);color:var(--bu);font-family:Poppins,Arial,sans-serif;font-size:12px;-webkit-user-select:none;user-select:none}
+  .hide{display:none!important}
+
+  /* ---------- login ---------- */
+  #login{position:fixed;inset:0;background:var(--or);display:flex;align-items:center;justify-content:center;z-index:99}
+  #login .card{background:var(--cr);width:400px;border-radius:22px;padding:38px 36px 26px;box-shadow:0 30px 60px rgba(65,21,23,.35);position:relative}
+  #login .card:before{content:"";position:absolute;top:0;left:36px;width:84px;height:7px;background:var(--or);border-radius:0 0 8px 8px}
+  #login img{height:44px;transform:rotate(4.7deg);margin-bottom:14px}
+  #login h2{margin:0 0 4px;font-size:25px;font-weight:600;color:var(--or)} #login h2 b{font-weight:900;color:var(--bu)}
+  #login p{margin:0 0 22px;color:var(--gr)}
+  .fld{margin-bottom:14px} .fld label{display:block;font-size:11px;font-weight:600;margin-bottom:5px}
+  .fld input{width:100%;padding:12px 14px;border:1.5px solid var(--ln);border-radius:10px;background:#fff;font:inherit;color:var(--bu);-webkit-user-select:text;user-select:text}
+  .fld input:focus{outline:none;border-color:var(--or)}
+  .btn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--or);color:var(--cr);font:inherit;font-weight:800;font-size:13px;cursor:pointer}
+  .btn:hover{background:#e65000}
+  #l-err{color:#c0392b;min-height:18px;font-weight:600;margin-bottom:6px}
+  .pw{margin-top:18px;text-align:center;font-size:10px;color:var(--gr);letter-spacing:.4px} .pw b{color:var(--or)}
+
+  /* ---------- app shell ---------- */
+  #app{height:100vh;display:grid;grid-template-columns:270px 1fr}
+  aside{background:var(--bu);color:var(--cr);padding:22px 20px 14px;display:flex;flex-direction:column;min-height:0;position:relative}
+  aside:before{content:"";position:absolute;top:0;left:20px;width:84px;height:6px;background:var(--or);border-radius:0 0 8px 8px}
+  .brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .brand img{height:34px;transform:rotate(4.7deg)}
+  .who{background:rgba(244,237,227,.08);border-radius:10px;padding:9px 11px;margin-bottom:14px;font-size:10px;line-height:1.4}
+  .who b{display:block;font-size:12px;color:var(--li);font-weight:600}
+  .who a{color:var(--or);cursor:pointer;font-weight:600}
+  aside h4{margin:0 0 8px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(244,237,227,.55);font-weight:600}
+  .fl{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto}
+  aside input,aside select{width:100%;padding:9px 10px;border:1px solid rgba(244,237,227,.2);border-radius:8px;background:rgba(244,237,227,.07);color:var(--cr);font:inherit;font-size:11.5px;-webkit-user-select:text;user-select:text}
+  aside select option{background:var(--bu);color:var(--cr)}
+  aside input::placeholder{color:rgba(244,237,227,.45)}
+  .side-btn{width:100%;padding:10px;border:0;border-radius:8px;font:inherit;font-weight:800;font-size:12px;cursor:pointer;background:var(--or);color:var(--cr)}
+  .side-btn.ghost{background:transparent;border:1px solid rgba(244,237,227,.3)}
+  .side-btn:disabled{opacity:.45;cursor:default}
+  .clear{background:none;border:0;color:var(--or);font:inherit;font-weight:600;cursor:pointer;text-align:left;padding:2px 0}
+  .push{flex:1}
+  #log{font-size:10px;color:rgba(244,237,227,.6);margin:8px 0;min-height:14px}
+  .pwr{margin-top:12px;padding-top:10px;border-top:1px solid rgba(244,237,227,.15);text-align:center;font-size:10px;color:rgba(244,237,227,.6);letter-spacing:.4px}
+  .pwr b{color:var(--li)}
+
+  main{display:flex;flex-direction:column;padding:20px 26px 14px;min-width:0;min-height:0;position:relative}
+  .top{display:flex;align-items:flex-end;justify-content:space-between}
+  h1{margin:0;font-size:25px;font-weight:600;color:var(--or);line-height:1.1} h1 b{font-weight:900;color:var(--bu)}
+  .sub{color:var(--gr);font-size:10.5px;margin-top:3px}
+  .tabs{display:flex;gap:4px;background:rgba(65,21,23,.07);padding:4px;border-radius:12px}
+  .tab{padding:8px 18px;border-radius:9px;font-weight:600;cursor:pointer;color:var(--bu)}
+  .tab.on{background:var(--or);color:var(--cr)}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0 14px}
+  .kpi{background:var(--wh);border-radius:14px;padding:12px 16px;border:1px solid var(--ln)}
+  .kpi.a{background:var(--or);color:var(--cr);border-color:var(--or)} .kpi.b{background:var(--bu);color:var(--cr);border-color:var(--bu)}
+  .kpi .v{font-size:25px;font-weight:800;line-height:1.1} .kpi.a .v,.kpi.b .v{color:var(--li)}
+  .kpi .l{font-size:10px;font-weight:500;opacity:.8;margin-top:2px}
+  #tw{flex:1;min-height:0;background:var(--wh);border-radius:16px;border:1px solid var(--ln);overflow:hidden}
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  th{height:42px;text-align:left;font-size:10.5px;font-weight:600;padding:0 10px;border-bottom:2px solid var(--or);white-space:nowrap;cursor:pointer;color:var(--bu);background:#fffdfa}
+  td{height:60px;padding:0 10px;border-bottom:1px solid var(--ln);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  .id{font-size:10px;color:var(--gr)} .id b{font-size:13px;color:var(--bu);font-weight:800}
+  .nm{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis} .mt{font-size:9.5px;color:var(--gr);overflow:hidden;text-overflow:ellipsis}
+  .big{font-weight:600;font-size:12px} .small{font-size:9.5px;color:var(--gr)}
+  .tag{display:inline-block;padding:4px 11px;border-radius:20px;font-weight:600;font-size:10.5px}
+  .cp{cursor:pointer;opacity:.45;margin-left:3px} .cp:hover{opacity:1}
+  .stack{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#eee}
+  a.pin{display:inline-flex;width:30px;height:30px;border-radius:50%;background:var(--cr);align-items:center;justify-content:center}
+  a.pin:hover{background:var(--or)} a.pin:hover svg{fill:#fff}
+  .pager{display:flex;align-items:center;justify-content:space-between;padding-top:10px;color:var(--gr);font-size:11px}
+  .pager button{border:1px solid var(--ln);background:var(--wh);color:var(--bu);border-radius:8px;padding:6px 14px;font:inherit;font-weight:600;cursor:pointer;margin-left:6px}
+  .pager button:disabled{opacity:.35;cursor:default} .pager button:not(:disabled):hover{background:var(--or);color:#fff;border-color:var(--or)}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="card">
+    <img src="assets/talabat-logo.png" alt="talabat">
+    <h2>Riders <b>Live Dashboard</b></h2>
+    <p>Sign in with your office email.</p>
+    <div class="fld"><label>Email</label><input id="l-email" type="email" autocomplete="off"></div>
+    <div class="fld"><label>Password</label><input id="l-pw" type="password" autocomplete="off"></div>
+    <div id="l-err"></div>
+    <button class="btn" id="l-go">Sign in</button>
+    <div class="pw">Powered by <b>T2</b></div>
+  </div>
+</div>
+
+<div id="app" class="hide">
+  <aside>
+    <div class="brand"><img src="assets/talabat-logo.png" alt="talabat"></div>
+    <div class="who"><b id="u-label"></b><span id="u-email"></span> · <a id="logout">Sign out</a></div>
+
+    <h4>Filters</h4>
+    <div class="fl">
+      <input id="f-q" placeholder="Search name / ID / phone">
+      <select id="f-company" class="adm"></select>
+      <select id="f-gov"></select>
+      <select id="f-zone"></select>
+      <select id="f-sp"></select>
+      <select id="f-vehicle"></select>
+      <select id="f-state"></select>
+      <button class="clear" id="clr">Clear all filters</button>
+    </div>
+
+    <div class="push"></div>
+    <div id="log"></div>
+    <div style="display:flex;gap:8px"><button class="side-btn" id="go">Refresh</button><button class="side-btn ghost" id="csv" disabled>CSV</button></div>
+    <div class="pwr">Powered by <b>T2</b></div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div><h1 id="title">Riders <b>Live</b></h1><div class="sub" id="upd"></div></div>
+      <div class="tabs"><div class="tab on" data-t="riders">Riders</div><div class="tab adm" data-t="companies">Companies</div></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div id="tw">
+      <table id="rt"></table>
+      <table id="ct" class="hide"></table>
+    </div>
+    <div class="pager"><span id="pinfo"></span><span><button id="prev">‹ Prev</button><span id="pnum" style="margin:0 8px"></span><button id="next">Next ›</button></span></div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script>
+const FIREBASE_DB_URL = "https://talabat-riders-dashboard-default-rtdb.firebaseio.com";
+const $ = (id) => document.getElementById(id);
+const ROW_H = 60, HEAD_H = 42;
+
+const COMPANY_NAMES = {1:"Al Alamia",2:"Jasson",3:"El Tohami",4:"Four Season",5:"El Abtal",6:"Master Line",7:"MTA",8:"el Dawlya",9:"Top delivery",10:"El Ezz",11:"Full Speed",12:"Top Vision",13:"Ebad El rahman",14:"Eagles",15:"El Sare3",16:"Stop Car",17:"Tanta Car",18:"Future",19:"SAR",20:"Zero Zero Seven",21:"Wasaly",22:"Tanta",23:"On Road",24:"Mobasher",25:"BeCool",26:"Kaf",27:"Wakeel",28:"Moga",29:"Turbo",30:"Go express",31:"Hero",32:"Speedo",33:"Pace",34:"Al Saiaf express",35:"Team Mh for delivery",36:"Abshero",38:"Yalla fel sekka",39:"Speedy",40:"Apache",41:"el sahm el saree",42:"Zagel",43:"Barg",44:"El reda",45:"BLC",46:"Smart service",47:"el salsabel",48:"Noot",49:"Bedaya",50:"Family",51:"Superspeed",52:"Courier for delivery",53:"MR Delivery",55:"Gearz",56:"El Mostakbal",57:"SOG",58:"A3M",59:"Rawahel",60:"Ready",61:"Asphalt",62:"makhsus",63:"Gelesco",64:"Glesco",65:"Go delivery",66:"Ayla Express",67:"El Wafaa",68:"Galaxy",69:"Hydwing",70:"WSL"};
+const coName = (id) => COMPANY_NAMES[id] || "Company " + id;
+
+const STATE_STYLE = { working: ["#411517", "#CFFF00"], break: ["#FF944D", "#411517"], late: ["#FF5900", "#F4EDE3"], idle: ["#8318D8", "#F4EDE3"], offline: ["#595959", "#F4EDE3"], not_working: ["#595959", "#F4EDE3"] };
+const EXTRA = [["#FCA06F", "#411517"], ["#B34700", "#F4EDE3"], ["#EBE8FC", "#8318D8"], ["#343B46", "#F4EDE3"]];
+const dyn = {}; let xi = 0;
+const sty = (s) => STATE_STYLE[s] || dyn[s] || (dyn[s] = EXTRA[xi++ % EXTRA.length]);
+
+let USER = null, ALL_ROWS = [], ROWS = [], SORT = { key: "name", dir: 1 }, TAB = "riders", timer = null;
+const PG = { riders: 0, companies: 0 };
+const F = { company: "", gov: "", q: "", vehicle: "", zone: "", state: "", sp: "" };
+
+let LASTERR = "";
+const log = (t) => { $("log").textContent = t; };
+function emptyMsg(cols) {
+  const m = LASTERR ? LASTERR : (ROWS.length ? "No riders match the filters." : "No live data available yet. Please wait for sync.");
+  return `<tr><td colspan="${cols}" style="height:140px;text-align:center;white-space:normal;color:#411517"><b style="color:#FF5900">${LASTERR ? "Could not load data" : "Nothing to show"}</b><br>${esc(m)}</td></tr>`;
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const num = (n, d = 0) => Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (n) => Math.round((n || 0) * 100) + "%";
+const hms = (s) => { s = Math.round(s || 0); const p = (x) => String(x).padStart(2, "0"); return `${p(Math.floor(s / 3600))}:${p(Math.floor(s % 3600 / 60))}:${p(s % 60)}`; };
+const hm = (s) => s ? new Date(s).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
+const govName = (r) => `City ${r.city_id}`;
+const uniq = (a) => [...new Set(a.filter(x => x !== "" && x != null))].sort((x, y) => String(x).localeCompare(String(y)));
+
+// auth
+async function sha(salt, pw) {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pw));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+async function signIn() {
+  const em = $("l-email").value.trim().toLowerCase(), pw = $("l-pw").value;
+  const a = T2_CONFIG.accounts.find(x => x.email === em);
+  if (!a || (await sha(a.salt, pw)) !== a.hash) { $("l-err").textContent = "Wrong email or password."; return; }
+  localStorage.setItem("session", JSON.stringify({ email: a.email }));
+  enter(a);
+}
+function enter(a) {
+  USER = a;
+  $("login").classList.add("hide"); $("app").classList.remove("hide");
+  const admin = a.role === "admin";
+  document.querySelectorAll(".adm").forEach(el => el.classList.toggle("hide", !admin));
+  $("u-label").textContent = a.label; $("u-email").textContent = a.email;
+  $("title").innerHTML = admin ? "Riders <b>Live</b>" : esc(a.label) + " <b>Riders</b>";
+  clearInterval(timer);
+  timer = setInterval(fetchLiveFromFirebase, 30000);
+  fetchLiveFromFirebase();
+}
+$("l-go").onclick = signIn;
+$("l-pw").onkeydown = (e) => { if (e.key === "Enter") signIn(); };
+$("logout").onclick = () => { localStorage.removeItem("session"); location.reload(); };
+
+// fetch data
+let LOADING = false;
+async function fetchLiveFromFirebase() {
+  if (LOADING) return; LOADING = true;
+  $("go").disabled = true; log("Loading...");
+  try {
+    const res = await fetch(`${FIREBASE_DB_URL}/dashboard.json`);
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    const data = await res.json();
+    if (!data || !data.rows) throw new Error("No data in Firebase yet.");
+    ALL_ROWS = data.rows;
+    const admin = USER.role === "admin";
+    ROWS = ALL_ROWS.filter(r => admin || r.company_id === USER.company);
+    const updTime = data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("en-GB") : new Date().toLocaleTimeString("en-GB");
+    $("upd").textContent = "Data refreshed " + updTime + " · " + num(ROWS.length) + " riders";
+    LASTERR = ""; log("Updated");
+    buildFilters(); PG.riders = PG.companies = 0; render();
+    $("csv").disabled = !ROWS.length;
+  } catch (err) {
+    LASTERR = err.message; log("Error: " + err.message);
+    if (!ROWS.length) render();
+  }
+  $("go").disabled = false; LOADING = false;
+}
+
+const filtered = () => {
+  const q = F.q.toLowerCase();
+  return ROWS.filter(r =>
+    (!F.company || String(r.company_id) === F.company) && (!F.gov || String(r.city_id) === F.gov) &&
+    (!F.vehicle || r.vehicle === F.vehicle) && (!F.zone || r.zone === F.zone) && (!F.state || r.status === F.state) &&
+    (!F.sp || r.starting_point === F.sp) && (!q || (r.name + " " + r.phone_number + " " + r.employee_id).toLowerCase().includes(q)));
+};
+function fill(id, label, opts) {
+  const el = $(id), cur = el.value;
+  el.innerHTML = `<option value="">${label}</option>` + opts.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join("");
+  el.value = opts.some(o => String(o[0]) === cur) ? cur : "";
+}
+function buildFilters() {
+  fill("f-company", "All companies", uniq(ROWS.map(r => r.company_id)).map(id => [id, coName(id)]).sort((a, b) => a[1].localeCompare(b[1])));
+  fill("f-gov", "All governorates", uniq(ROWS.map(r => r.city_id)).map(id => [id, "City " + id]));
+  fill("f-zone", "All zones", uniq(ROWS.map(r => r.zone)).map(x => [x, x]));
+  fill("f-sp", "All starting points", uniq(ROWS.map(r => r.starting_point)).map(x => [x, x]));
+  fill("f-vehicle", "All vehicles", uniq(ROWS.map(r => r.vehicle)).map(x => [x, x]));
+  fill("f-state", "All rider states", uniq(ROWS.map(r => r.status)).map(x => [x, x]));
+  F.company = $("f-company").value; F.gov = $("f-gov").value; F.zone = $("f-zone").value; F.sp = $("f-sp").value; F.vehicle = $("f-vehicle").value; F.state = $("f-state").value;
+}
+
+const perPage = () => Math.max(3, Math.floor(($("tw").clientHeight - HEAD_H) / ROW_H));
+const tag = (s) => { const [bg, fg] = sty(s); return `<span class="tag" style="background:${bg};color:${fg}">${esc(s)}</span>`; };
+const PIN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#411517"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>';
+
+const COLS = [
+  ["name", "Rider", "25%", r => `<div class="id">ID <b>${r.employee_id}</b><span class="cp" data-c="${r.employee_id}">⧉</span></div><div class="nm">${esc(r.name)}</div><div class="mt">${esc(coName(r.company_id))} · ${esc(govName(r))} · ${esc(r.phone_number)}</div>`],
+  ["shift_start", "Session", "9%", r => `<span class="big">${hm(r.shift_start)}</span><span class="small"> – ${hm(r.shift_end)}</span>`],
+  ["utr", "Performance", "9%", r => `<div class="big">UTR ${num(r.utr, 1)}</div><div class="small">${r.accepted} deliveries</div>`],
+  ["worked", "Time worked", "9%", r => `<span class="big">${hms(r.worked)}</span>`],
+  ["acceptance", "Acceptance", "8%", r => `<span class="big">${pct(r.acceptance)}</span>`],
+  ["wallet_balance", "Wallet", "10%", r => `<span class="big">EGP ${num(r.wallet_balance, 2)}</span>`],
+  ["breaks", "Breaks", "9%", r => `<div class="big">${r.breaks}</div><div class="small">${hms(r.break_s)}</div>`],
+  ["late", "Late", "8%", r => `<span class="big">${hms(r.late)}</span>`],
+  ["status", "State", "9%", r => tag(r.status)],
+  ["lat", "Map", "4%", r => r.lat ? `<a class="pin" target="_blank" title="Updated ${esc(r.location_updated_at)}" href="https://www.google.com/maps?q=${r.lat},${r.lng}">${PIN}</a>` : ""]
+];
+
+function renderKpis(rs) {
+  const n = rs.length || 1;
+  const k = [["a", num(rs.length), "Total riders"], ["", num(rs.filter(r => r.status === "working").length), "Working now"], ["b", num(rs.filter(r => r.active_deliveries > 0).length), "On active delivery"],
+    ["", pct(rs.reduce((a, r) => a + r.acceptance, 0) / n), "Avg acceptance"], ["", "EGP " + num(rs.reduce((a, r) => a + r.wallet_balance, 0)), "Wallet balance"]];
+  $("kpis").innerHTML = k.map(([c, v, l]) => `<div class="kpi ${c}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+}
+
+function pager(total) {
+  const per = perPageCache, pages = Math.max(1, Math.ceil(total / per));
+  PG[TAB] = Math.min(PG[TAB], pages - 1);
+  const from = total ? PG[TAB] * per + 1 : 0, to = Math.min(total, (PG[TAB] + 1) * per);
+  $("pinfo").textContent = `Showing ${from}–${to} of ${num(total)} results`;
+  $("pnum").textContent = `Page ${PG[TAB] + 1} / ${pages}`;
+  $("prev").disabled = PG[TAB] <= 0; $("next").disabled = PG[TAB] >= pages - 1;
+}
+let perPageCache = 8;
+
+function renderRiders() {
+  const rs = filtered().sort((a, b) => {
+    const x = a[SORT.key], y = b[SORT.key];
+    return (typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y))) * SORT.dir;
+  });
+  renderKpis(rs);
+  perPageCache = perPage(); pager(rs.length);
+  const page = rs.slice(PG.riders * perPageCache, (PG.riders + 1) * perPageCache);
+  $("rt").innerHTML = `<colgroup>${COLS.map(c => `<col style="width:${c[2]}">`).join("")}</colgroup><tr>${COLS.map(c => `<th data-k="${c[0]}">${c[1]}${SORT.key === c[0] ? (SORT.dir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>` +
+    (page.length ? page.map(r => `<tr>${COLS.map(c => `<td>${c[3](r)}</td>`).join("")}</tr>`).join("") : emptyMsg(COLS.length));
+  $("rt").querySelectorAll("th").forEach(th => th.onclick = () => { const k = th.dataset.k; SORT = { key: k, dir: SORT.key === k ? -SORT.dir : 1 }; PG.riders = 0; renderRiders(); });
+  $("rt").querySelectorAll(".cp").forEach(s => s.onclick = () => navigator.clipboard.writeText(s.dataset.c));
+}
+
+function renderCompanies() {
+  const rs = filtered(), states = uniq(rs.map(r => r.status));
+  renderKpis(rs);
+  const g = {}; rs.forEach(r => (g[r.company_id] = g[r.company_id] || []).push(r));
+  const list = Object.entries(g).sort((a, b) => b[1].length - a[1].length);
+  perPageCache = perPage(); pager(list.length);
+  const page = list.slice(PG.companies * perPageCache, (PG.companies + 1) * perPageCache);
+  const w = 100 / (states.length + 7);
+  $("ct").innerHTML = `<colgroup><col style="width:${w * 1.8}%"><col style="width:${w}%">${states.map(() => `<col style="width:${w}%">`).join("")}<col style="width:${w * 1.4}%"><col style="width:${w}%"><col style="width:${w}%"><col style="width:${w}%"><col style="width:${w * .8}%"></colgroup>` +
+    `<tr><th>Company</th><th>Riders</th>${states.map(s => `<th>${esc(s)}</th>`).join("")}<th>Distribution</th><th>Active</th><th>Completed</th><th>Acceptance</th><th>Wallet</th></tr>` +
+    page.map(([id, a]) => {
+      const c = s => a.filter(r => r.status === s).length;
+      return `<tr><td class="big">${esc(coName(id))}</td><td class="big">${a.length}</td>${states.map(s => `<td>${c(s)}</td>`).join("")}` +
+        `<td><div class="stack">${states.map(s => `<div style="width:${c(s) / a.length * 100}%;background:${sty(s)[0]}"></div>`).join("")}</div></td>` +
+        `<td>${a.reduce((x, r) => x + r.active_deliveries, 0)}</td><td>${a.reduce((x, r) => x + r.completed, 0)}</td>` +
+        `<td>${pct(a.reduce((x, r) => x + r.acceptance, 0) / a.length)}</td><td>${num(a.reduce((x, r) => x + r.wallet_balance, 0))}</td></tr>`;
+    }).join("");
+}
+
+function render() {
+  $("rt").classList.toggle("hide", TAB !== "riders"); $("ct").classList.toggle("hide", TAB !== "companies");
+  TAB === "riders" ? renderRiders() : renderCompanies();
+}
+
+function toCSV(objs) {
+  if (!objs.length) return "";
+  const cols = Object.keys(objs[0]), q = v => { v = String(v ?? ""); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  return "﻿" + [cols.join(","), ...objs.map(o => cols.map(c => q(o[c])).join(","))].join("\r\n");
+}
+
+$("go").onclick = () => fetchLiveFromFirebase();
+$("csv").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([toCSV(filtered().map(r => ({ company: coName(r.company_id), governorate: govName(r), ...r })))], { type: "text/csv;charset=utf-8" }));
+  a.download = `riders_${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.csv`; a.click();
+};
+[["f-company", "company"], ["f-gov", "gov"], ["f-vehicle", "vehicle"], ["f-zone", "zone"], ["f-state", "state"], ["f-sp", "sp"]].forEach(([id, k]) => $(id).onchange = (e) => { F[k] = e.target.value; PG.riders = PG.companies = 0; render(); });
+$("f-q").oninput = (e) => { F.q = e.target.value; PG.riders = PG.companies = 0; render(); };
+$("clr").onclick = () => { Object.keys(F).forEach(k => F[k] = ""); ["f-company", "f-gov", "f-vehicle", "f-zone", "f-state", "f-sp", "f-q"].forEach(id => $(id).value = ""); PG.riders = PG.companies = 0; render(); };
+$("prev").onclick = () => { PG[TAB]--; render(); };
+$("next").onclick = () => { PG[TAB]++; render(); };
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  TAB = t.dataset.t; document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t)); render();
+});
+window.addEventListener("resize", () => { if (ROWS.length) render(); });
+
+// boot
+window.onload = () => {
+  const sess = localStorage.getItem("session");
+  const parsed = sess ? JSON.parse(sess) : null;
+  const a = parsed && T2_CONFIG.accounts.find(x => x.email === parsed.email);
+  if (a) enter(a); else $("l-email").focus();
+};
+</script>
+</body>
+</html>
